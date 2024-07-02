@@ -1,36 +1,19 @@
 import dotenv from 'dotenv';
-dotenv.config();
-import cors from 'cors'
-
 import express from 'express';
 import { createPool } from 'mysql2/promise';
+import cors from 'cors';
 
-const app = express(); // Crea la instancia de Express aquí
+dotenv.config();
+
+const app = express();
 
 // Middleware para permitir CORS
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://shiny-sunburst-09a693.netlify.app/'); // Permite todas las solicitudes, reemplaza '*' con tu dominio si es específico.
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
-
-const allowedOrigins = [
-    "https://shiny-sunburst-09a693.netlify.app/"
-];
-
-app.use(cors({
-    origin: function (origin, callback){
-        if(!origin) return callback(null,true);
-        if (allowedOrigins.indexOf(origin) === -1){
-            const msg = 'El origen no esta permitido por CORS'
-            return callback(new Error(msg), false)
-        }
-        return callback(null, true)
-    }, 
+const corsOptions = {
+    origin: '*',
     credentials: true
-}))
+};
 
+app.use(cors(corsOptions));
 
 // Middleware para parsear JSON
 app.use(express.json());
@@ -38,22 +21,22 @@ app.use(express.urlencoded({ extended: true }));
 
 // Crear pool de conexiones a MySQL
 const pool = createPool({
-  host: process.env.MYSQL_ADDON_HOST,
-  port: process.env.MYSQL_ADDON_PORT,
-  user: process.env.MYSQL_ADDON_USER,
-  password: process.env.MYSQL_ADDON_PASSWORD,
-  database: process.env.MYSQL_ADDON_DB
+    host: process.env.MYSQL_ADDON_HOST,
+    port: process.env.MYSQL_ADDON_PORT,
+    user: process.env.MYSQL_ADDON_USER,
+    password: process.env.MYSQL_ADDON_PASSWORD,
+    database: process.env.MYSQL_ADDON_DB
 });
 
 // Verifica la conexión a la base de datos
 (async () => {
-  try {
-    const connection = await pool.getConnection();
-    console.log('Connected to the database');
-    connection.release();
-  } catch (error) {
-    console.error('Database connection error:', error);
-  }
+    try {
+        const connection = await pool.getConnection();
+        console.log('Connected to the database');
+        connection.release();
+    } catch (error) {
+        console.error('Database connection error:', error);
+    }
 })();
 
 // Rutas y controladores
@@ -67,33 +50,30 @@ app.get('/productos', async (req, res) => {
                 JOIN cuotas ON productos.fk_cuotas = cuotas.id_cuotas
                 ORDER BY productos.precio DESC`;
     try {
-      const [rows] = await pool.query(sql);
-      res.json(rows);
+        const [rows] = await pool.query(sql);
+        res.json(rows);
     } catch (error) {
-      console.error('Error en GET /productos:', error);
-      res.status(500).send('Internal server error');
+        console.error('Error en GET /productos:', error);
+        res.status(500).send('Internal server error');
     }
 });
 
 app.post('/productos', async (req, res) => {
-  const producto = req.body;
-  const sql = `INSERT INTO productos SET ?`;
+    const producto = req.body;
+    const sql = `INSERT INTO productos SET ?`;
 
-  try {
-    const [result] = await pool.query(sql, producto);
-    res.status(201).send(`Producto creado con id: ${result.insertId}`);
-  } catch (error) {
-    console.error('Error en POST /productos:', error);
-    res.status(500).send('Internal server error');
-  }
+    try {
+        const [result] = await pool.query(sql, producto);
+        res.status(201).send(`Producto creado con id: ${result.insertId}`);
+    } catch (error) {
+        console.error('Error en POST /productos:', error);
+        res.status(500).send('Internal server error');
+    }
 });
 
 // ... otras rutas y configuraciones
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
-
-
-
