@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
+import cors from 'cors'
 
 import express from 'express';
 import { createPool } from 'mysql2/promise';
@@ -8,11 +9,28 @@ const app = express(); // Crea la instancia de Express aquí
 
 // Middleware para permitir CORS
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Permite todas las solicitudes, reemplaza '*' con tu dominio si es específico.
+  res.setHeader('Access-Control-Allow-Origin', 'https://shiny-sunburst-09a693.netlify.app/'); // Permite todas las solicitudes, reemplaza '*' con tu dominio si es específico.
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
+
+const allowedOrigins = [
+    "https://shiny-sunburst-09a693.netlify.app/"
+];
+
+app.use(cors({
+    origin: function (origin, callback){
+        if(!origin) return callback(null,true);
+        if (allowedOrigins.indexOf(origin) === -1){
+            const msg = 'El origen no esta permitido por CORS'
+            return callback(new Error(msg), false)
+        }
+        return callback(null, true)
+    }, 
+    credentials: true
+}))
+
 
 // Middleware para parsear JSON
 app.use(express.json());
